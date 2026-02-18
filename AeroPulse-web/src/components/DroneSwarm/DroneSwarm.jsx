@@ -1,159 +1,162 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useEffect, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useSwarmAnimation } from './useSwarmAnimation'
 import { DRONE_COUNT } from './formations'
+import { FLAGS, loadFlagImage, getFlagColorFromImage } from './flagData'
 
-export function DroneSwarm() {
+export function DroneSwarm({ country = 'usa' }) {
   const meshRef = useRef()
-  const { update, positions } = useSwarmAnimation()
-
-  // Create a dummy object for matrix calculations
+  const { update, reset } = useSwarmAnimation()
   const dummy = useMemo(() => new THREE.Object3D(), [])
+  const imageDataRef = useRef(null)
 
-  // Create color attribute for per-instance colors
+  // Load flag image when country changes
+  useEffect(() => {
+    let active = true
+    const flagDef = FLAGS[country]
+    if (flagDef && flagDef.image) {
+      loadFlagImage(flagDef.image).then((data) => {
+        if (active) {
+          imageDataRef.current = data
+          reset() // Reset animation when new flag is loaded
+        }
+      }).catch(err => console.error("Failed to load flag:", err))
+    }
+    return () => { active = false }
+  }, [country, reset])
+
   const colorArray = useMemo(() => {
     const colors = new Float32Array(DRONE_COUNT * 3)
-    for (let i = 0; i < DRONE_COUNT; i++) {
-      colors[i * 3] = 0     // R
-      colors[i * 3 + 1] = 1 // G
-      colors[i * 3 + 2] = 1 // B
-    }
     return colors
   }, [])
 
-  // Update positions and colors every frame
   useFrame((state, delta) => {
     if (!meshRef.current) return
 
-    // Cap delta to prevent huge jumps
-    const cappedDelta = Math.min(delta, 0.1)
-    const { positions: newPositions, color } = update(cappedDelta)
+    const { positions, phase } = update(Math.min(delta, 0.05))
+    const time = state.clock.elapsedTime
 
-    // Update instance matrices
+    const imageData = imageDataRef.current
+    const hasImage = !!imageData
+
     for (let i = 0; i < DRONE_COUNT; i++) {
-      const pos = newPositions[i]
+      const pos = positions[i]
 
-      dummy.position.set(pos.x, pos.y, pos.z)
+      // Drone movement noise
+      const noiseX = Math.sin(time * 0.4 + i * 111.1) * 0.015
+      const noiseY = Math.cos(time * 0.25 + i * 333.3) * 0.015
+      const noiseZ = Math.sin(time * 0.35 + i * 222.2) * 0.015
 
-      // Add slight random scale variation for sparkle effect
-      const scale = 0.8 + Math.sin(state.clock.elapsedTime * 5 + i * 0.1) * 0.2
-      dummy.scale.setScalar(scale)
+      dummy.position.set(pos.x + noiseX, pos.y + noiseY, pos.z + noiseZ)
 
+      const twinkle = 0.92 + Math.sin(time * 4 + i * 0.06) * 0.08
+      dummy.scale.setScalar(twinkle)
       dummy.updateMatrix()
       meshRef.current.setMatrixAt(i, dummy.matrix)
 
-      // Update colors with slight variation per drone
-      const variation = 0.1 + Math.random() * 0.1
-      colorArray[i * 3] = color.r * (1 + variation)
-      colorArray[i * 3 + 1] = color.g * (1 + variation)
-      colorArray[i * 3 + 2] = color.b * (1 + variation)
+      // Color logic
+      const u = pos.u !== undefined ? pos.u : 0.5
+      const v = pos.v !== undefined ? pos.v : 0.5
+
+      let r, g, b
+
+      if (phase === 'station' || !hasImage) {
+        // Default blue/cyan for station or loading
+        r = 0; g = 0.9; b = 1
+      } else {
+        // Sample from image
+        const [imgR, imgG, imgB] = getFlagColorFromImage(imageData, u, v)
+        r = imgR; g = imgG; b = imgB
+      }
+
+      // Intensity and sparkle
+      const intensity = 1.8
+      const sparkle = 0.9 + Math.random() * 0.2
+
+      colorArray[i * 3] = r * intensity * sparkle
+      colorArray[i * 3 + 1] = g * intensity * sparkle
+      colorArray[i * 3 + 2] = b * intensity * sparkle
     }
 
     meshRef.current.instanceMatrix.needsUpdate = true
-
-    // Update color attribute
     if (meshRef.current.geometry.attributes.color) {
       meshRef.current.geometry.attributes.color.needsUpdate = true
     }
   })
 
   return (
-    <instancedMesh
-      ref={meshRef}
-      args={[null, null, DRONE_COUNT]}
-      frustumCulled={false}
-    >
-      <sphereGeometry args={[0.05, 6, 6]}>
-        <instancedBufferAttribute
-          attach="attributes-color"
-          args={[colorArray, 3]}
-        />
+    <instancedMesh ref={meshRef} args={[null, null, DRONE_COUNT]} frustumCulled={false}>
+      <sphereGeometry args={[0.045, 8, 8]}>
+        <instancedBufferAttribute attach="attributes-color" args={[colorArray, 3]} />
       </sphereGeometry>
-      <meshBasicMaterial
-        vertexColors
-        toneMapped={false}
-      />
+      <meshBasicMaterial vertexColors toneMapped={false} />
     </instancedMesh>
   )
 }
 
-// Ground reference plane
-export function Ground() {
+export function FlagPole() {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]}>
-      <planeGeometry args={[100, 100]} />
-      <meshStandardMaterial
-        color="#0a0a1a"
-        transparent
-        opacity={0.5}
-      />
-    </mesh>
-  )
-}
-
-// Station platform where drones launch from
-export function Station() {
-  return (
-    <group position={[0, -0.3, 0]}>
-      {/* Main platform */}
-      <mesh>
-        <cylinderGeometry args={[8, 10, 0.5, 32]} />
-        <meshStandardMaterial
-          color="#1a1a2e"
-          metalness={0.8}
-          roughness={0.2}
-        />
+    <group position={[-13, 0, 0]}>
+      <mesh position={[0, 8, 0]}>
+        <cylinderGeometry args={[0.1, 0.12, 18, 16]} />
+        <meshStandardMaterial color="#666666" metalness={0.9} roughness={0.1} />
       </mesh>
-      {/* Glowing ring */}
-      <mesh position={[0, 0.3, 0]}>
-        <torusGeometry args={[9, 0.1, 16, 64]} />
-        <meshBasicMaterial color="#00ffff" />
+      <mesh position={[0, 17.2, 0]}>
+        <sphereGeometry args={[0.22, 16, 16]} />
+        <meshStandardMaterial color="#ffd700" metalness={0.95} roughness={0.05} />
       </mesh>
-      {/* Inner ring */}
-      <mesh position={[0, 0.3, 0]}>
-        <torusGeometry args={[6, 0.05, 16, 64]} />
-        <meshBasicMaterial color="#0088ff" />
+      <mesh position={[0, -0.8, 0]}>
+        <cylinderGeometry args={[0.5, 0.7, 0.4, 16]} />
+        <meshStandardMaterial color="#333333" metalness={0.7} roughness={0.3} />
       </mesh>
     </group>
   )
 }
 
-// Ambient particles for atmosphere
+export function Ground({ bgColor = '#000510' }) {
+  // Make ground slightly lighter than background
+  const groundColor = useMemo(() => {
+    const c = new THREE.Color(bgColor)
+    c.offsetHSL(0, 0, 0.02)
+    return c
+  }, [bgColor])
+
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]}>
+        <planeGeometry args={[300, 300]} />
+        <meshStandardMaterial color={groundColor} />
+      </mesh>
+      <gridHelper args={[150, 75, '#1a1a2a', '#0a0a15']} position={[0, -0.99, 0]} />
+    </group>
+  )
+}
+
 export function AmbientParticles() {
-  const particleCount = 500
-  const particlesRef = useRef()
+  const count = 400
+  const ref = useRef()
 
   const positions = useMemo(() => {
-    const pos = new Float32Array(particleCount * 3)
-    for (let i = 0; i < particleCount; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 60
-      pos[i * 3 + 1] = Math.random() * 30
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 60
+    const pos = new Float32Array(count * 3)
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 150
+      pos[i * 3 + 1] = Math.random() * 80
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 150
     }
     return pos
   }, [])
 
   useFrame((state) => {
-    if (!particlesRef.current) return
-    particlesRef.current.rotation.y = state.clock.elapsedTime * 0.02
+    if (ref.current) ref.current.rotation.y = state.clock.elapsedTime * 0.002
   })
 
   return (
-    <points ref={particlesRef}>
+    <points ref={ref}>
       <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-        />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial
-        size={0.1}
-        color="#ffffff"
-        transparent
-        opacity={0.3}
-        sizeAttenuation
-      />
+      <pointsMaterial size={0.05} color="#ffffff" transparent opacity={0.18} sizeAttenuation />
     </points>
   )
 }
