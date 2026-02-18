@@ -95,6 +95,7 @@
   box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.3);
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  z-index: 3000;
   animation: slideUp 0.2s ease-out;
 }
 
@@ -512,8 +513,8 @@ canvas.main-canvas {
     width: 100%;
     height: auto;
     min-height: auto;
-    padding: 1.5rem 1rem 8rem 1rem;
-    /* Space for fixed footer */
+    padding: 1rem 1rem 7rem 1rem;
+    /* Reduced space for fixed footer to push panel down */
     display: flex !important;
     flex-direction: column;
     justify-content: flex-end;
@@ -531,26 +532,31 @@ canvas.main-canvas {
     background: rgba(16, 18, 27, 0.4);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    padding: 1.25rem;
+    padding: 1rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border-radius: 20px;
     animation: none;
     pointer-events: auto;
+    max-height: 45vh;
+    /* Limit height to 45% of viewport */
+    overflow-y: auto;
+    /* Allow scroll if content is too long */
   }
 
   .big-country-name {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
     text-align: center;
   }
 
   .info-separator-large {
-    margin: 1rem auto;
+    margin: 0.8rem auto;
+    height: 2px;
   }
 
   .big-info-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: 0.6rem;
     text-align: center;
   }
 
@@ -559,7 +565,7 @@ canvas.main-canvas {
   }
 
   .big-info-value {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   /* Fixed Footer for Mobile */
