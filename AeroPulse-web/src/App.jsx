@@ -79,6 +79,7 @@ function App() {
         controlsRef.current.target.set(0, 6, 0)
       }
       controlsRef.current.update()
+      if (controlsRef.current.saveState) controlsRef.current.saveState()
     }
   }, [selectedCountry, isMobile])
 
@@ -108,7 +109,7 @@ function App() {
         <pointLight position={[-15, 10, 10]} intensity={1.5} color="#ffcc00" />
         <pointLight position={[15, 5, -10]} intensity={1} color="#00aaff" />
 
-        <group position={isMobile ? [0, 28, 0] : [-14, 0, 0]} scale={isMobile ? 0.8 : 1}>
+        <group position={isMobile ? [0, 36, 0] : [-14, 0, 0]} scale={isMobile ? 0.8 : 1}>
           <Suspense fallback={null}>
             {!isMobile && <Ground bgColor={currentBg.color} />}
             <AmbientParticles />
@@ -136,7 +137,7 @@ function App() {
           maxPolarAngle={Math.PI / 2}
           autoRotate
           autoRotateSpeed={0.15}
-          target={[0, 6, 0]}
+          target={isMobile ? [0, 18, 0] : [0, 6, 0]}
         />
       </Canvas>
 
@@ -158,11 +159,6 @@ function App() {
             </span>
             <span className="bg-text">{currentBg.name}</span>
           </button>
-
-          <button className={`audio-toggle ${isAudioEnabled ? 'active' : ''}`} onClick={toggleAudio} title="Toggle Anthem">
-            <span className="audio-icon">{isAudioEnabled ? '🔊' : '🔇'}</span>
-            <span className="audio-text">{isAudioEnabled ? 'Mute' : 'Play Anthem'}</span>
-          </button>
         </div>
 
         <div className="footer-center">
@@ -174,6 +170,9 @@ function App() {
         </div>
 
         <div className="footer-right">
+          <button className={`audio-toggle ${isAudioEnabled ? 'active' : ''}`} onClick={toggleAudio} title="Toggle Anthem">
+            <span className="audio-icon">{isAudioEnabled ? '🔊' : '🔇'}</span>
+          </button>
         </div>
       </div>
 
@@ -200,19 +199,16 @@ function InfoPanel({ selectedCountry }) {
     })
   }
 
-  const [currentTime, setCurrentTime] = useState(getCountryTime(data?.timezone))
+  const [currentTime, setCurrentTime] = useState(() => getCountryTime(data?.timezone))
 
   useEffect(() => {
     if (!data?.timezone) return
-
-    // Update immediately on country change
-    setCurrentTime(getCountryTime(data.timezone))
 
     const timer = setInterval(() => {
       setCurrentTime(getCountryTime(data.timezone))
     }, 1000)
     return () => clearInterval(timer)
-  }, [selectedCountry, data])
+  }, [data?.timezone])
 
   if (!data) return null
 

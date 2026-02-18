@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect, useState } from 'react'
+import { useRef, useMemo, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useSwarmAnimation } from './useSwarmAnimation'
@@ -26,15 +26,12 @@ export function DroneSwarm({ country = 'usa' }) {
     return () => { active = false }
   }, [country, reset])
 
-  const colorArray = useMemo(() => {
-    const colors = new Float32Array(DRONE_COUNT * 3)
-    return colors
-  }, [])
-
   useFrame((state, delta) => {
     if (!meshRef.current) return
 
     const { positions, phase } = update(Math.min(delta, 0.05))
+    const colorAttribute = meshRef.current.geometry.attributes.color
+    const colorArray = colorAttribute.array
     const time = state.clock.elapsedTime
 
     const imageData = imageDataRef.current
@@ -80,15 +77,13 @@ export function DroneSwarm({ country = 'usa' }) {
     }
 
     meshRef.current.instanceMatrix.needsUpdate = true
-    if (meshRef.current.geometry.attributes.color) {
-      meshRef.current.geometry.attributes.color.needsUpdate = true
-    }
+    colorAttribute.needsUpdate = true
   })
 
   return (
     <instancedMesh ref={meshRef} args={[null, null, DRONE_COUNT]} frustumCulled={false}>
       <sphereGeometry args={[0.045, 8, 8]}>
-        <instancedBufferAttribute attach="attributes-color" args={[colorArray, 3]} />
+        <instancedBufferAttribute attach="attributes-color" args={[new Float32Array(DRONE_COUNT * 3), 3]} />
       </sphereGeometry>
       <meshBasicMaterial vertexColors toneMapped={false} />
     </instancedMesh>
@@ -133,6 +128,11 @@ export function Ground({ bgColor = '#000510' }) {
   )
 }
 
+const pseudoRandom = (seed) => {
+  const value = Math.sin(seed) * 10000
+  return value - Math.floor(value)
+}
+
 export function AmbientParticles() {
   const count = 400
   const ref = useRef()
@@ -140,12 +140,13 @@ export function AmbientParticles() {
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 150
-      pos[i * 3 + 1] = Math.random() * 80
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 150
+      const seed = i + 1
+      pos[i * 3] = (pseudoRandom(seed * 12.9898) - 0.5) * 150
+      pos[i * 3 + 1] = pseudoRandom(seed * 78.233) * 80
+      pos[i * 3 + 2] = (pseudoRandom(seed * 37.719) - 0.5) * 150
     }
     return pos
-  }, [])
+  }, [count])
 
   useFrame((state) => {
     if (ref.current) ref.current.rotation.y = state.clock.elapsedTime * 0.002

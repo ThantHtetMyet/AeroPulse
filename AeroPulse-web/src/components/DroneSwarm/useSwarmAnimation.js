@@ -120,5 +120,5 @@ export function useSwarmAnimation() {
     }
   }, [formations])
 
-  return { update, reset, positions: currentPositions.current, droneCount: DRONE_COUNT }
+  return { update, reset }
 }
