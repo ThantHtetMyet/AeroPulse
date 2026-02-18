@@ -512,32 +512,30 @@ canvas.main-canvas {
     width: 100%;
     height: auto;
     min-height: auto;
-    padding: 1rem 1rem 9rem 1rem;
-    /* Padding bottom for footer space */
+    padding: 1.5rem 1rem 8rem 1rem;
+    /* Space for fixed footer */
     display: flex !important;
     flex-direction: column;
     justify-content: flex-end;
     align-items: center;
     pointer-events: none;
-    /* Let clicks pass through empty space */
     background: transparent;
     box-sizing: border-box;
   }
 
   .info-content {
-    width: 90%;
+    width: 92%;
     max-width: 100%;
-    margin: 1rem auto;
-    background: rgba(255, 255, 255, 0.08);
-    /* Visible background */
-    backdrop-filter: blur(10px);
-    padding: 1.5rem;
+    margin-bottom: 0;
+    /* Reduced margin as footer is now fixed */
+    background: rgba(16, 18, 27, 0.4);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    padding: 1.25rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
     animation: none;
-    /* Disable animation to ensure visibility */
-    min-height: 200px;
     pointer-events: auto;
   }
 
@@ -548,7 +546,6 @@ canvas.main-canvas {
 
   .info-separator-large {
     margin: 1rem auto;
-    /* Center separator */
   }
 
   .big-info-grid {
@@ -559,45 +556,68 @@ canvas.main-canvas {
 
   .big-info-item {
     align-items: center;
-    /* Center items */
   }
 
   .big-info-value {
     font-size: 1.1rem;
   }
 
-  /* Footer at the bottom of the flow */
+  /* Fixed Footer for Mobile */
   .footer-controls {
-    position: relative;
-    bottom: auto;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
     height: auto;
-    padding: 1rem 1.5rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-    background: rgba(0, 0, 0, 0.3);
-    /* Slightly darker footer area */
-    flex-shrink: 0;
+    padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+    flex-wrap: nowrap;
+    /* Keep buttons on one line for better layout */
+    overflow-x: auto;
+    /* Horizontal scroll for buttons if needed */
+    gap: 0.8rem;
+    background: rgba(0, 5, 10, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 1000;
+    justify-content: center;
+    box-sizing: border-box;
   }
 
   .footer-left {
-    order: 2;
-    flex: 1;
+    position: static;
+    /* Remove absolute positioning from desktop */
     display: flex;
-    justify-content: center;
+    gap: 0.6rem;
+    order: 2;
   }
 
   .footer-center {
     order: 1;
-    width: 100%;
-    flex: 0 0 100%;
-    margin-bottom: 0.5rem;
+    width: auto;
+    flex: 1;
+    max-width: 200px;
+    margin-bottom: 0;
   }
 
-  .footer-right {
-    display: none;
+  .bg-toggle,
+  .audio-toggle {
+    padding: 0.5rem 0.8rem;
+    gap: 0.5rem;
+    min-width: fit-content;
+  }
+
+  .bg-text,
+  .audio-text {
+    font-size: 0.65rem;
   }
 
   .custom-dropdown {
     width: 100%;
+  }
+
+  .dropdown-trigger {
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
   }
 }

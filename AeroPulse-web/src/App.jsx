@@ -72,8 +72,8 @@ function App() {
     if (controlsRef.current) {
       // Force camera position and target reset
       if (isMobile) {
-        controlsRef.current.object.position.set(0, 0, 70)
-        controlsRef.current.target.set(0, 6, 0)
+        controlsRef.current.object.position.set(0, 6, 70)
+        controlsRef.current.target.set(0, 10, 0)
       } else {
         controlsRef.current.object.position.set(0, 8, 40)
         controlsRef.current.target.set(0, 6, 0)
@@ -87,7 +87,7 @@ function App() {
       <Canvas
         className="main-canvas"
         camera={{
-          position: isMobile ? [0, 0, 70] : [0, 8, 40],
+          position: isMobile ? [0, 6, 70] : [0, 8, 40],
           fov: 50,
           near: 0.1,
           far: 1000
@@ -108,7 +108,7 @@ function App() {
         <pointLight position={[-15, 10, 10]} intensity={1.5} color="#ffcc00" />
         <pointLight position={[15, 5, -10]} intensity={1} color="#00aaff" />
 
-        <group position={isMobile ? [0, 22, 0] : [-14, 0, 0]}>
+        <group position={isMobile ? [0, 18, 0] : [-14, 0, 0]}>
           <Suspense fallback={null}>
             {!isMobile && <Ground bgColor={currentBg.color} />}
             <AmbientParticles />
