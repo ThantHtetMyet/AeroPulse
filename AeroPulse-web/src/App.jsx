@@ -2,8 +2,8 @@ import { useState, Suspense, useRef, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stars } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
-import { DroneSwarm, FlagPole, Ground, AmbientParticles } from './components/DroneSwarm/DroneSwarm'
-import { FLAGS } from './components/DroneSwarm/flagData'
+import { DroneSwarm, Ground, AmbientParticles } from './components/DroneSwarm/DroneSwarm'
+import { FLAGS, getAssetPath } from './components/DroneSwarm/flagData'
 import './App.css'
 
 const BACKGROUNDS = [
@@ -20,6 +20,7 @@ function App() {
   const [selectedCountry, setSelectedCountry] = useState('usa')
   const [bgIndex, setBgIndex] = useState(0)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false)
   const audioRef = useRef(null)
 
   const currentBg = BACKGROUNDS[bgIndex]
@@ -38,14 +39,30 @@ function App() {
 
   useEffect(() => {
     if (audioRef.current && FLAGS[selectedCountry].anthem) {
-      audioRef.current.src = FLAGS[selectedCountry].anthem
+      const resolvedPath = getAssetPath(FLAGS[selectedCountry].anthem);
+      audioRef.current.src = resolvedPath
       audioRef.current.volume = 0.5
-      audioRef.current.play().catch(console.warn)
+
+      if (isAudioEnabled) {
+        audioRef.current.play().catch(console.warn)
+      } else {
+        audioRef.current.pause()
+      }
     }
-  }, [selectedCountry])
+  }, [selectedCountry, isAudioEnabled])
 
   const toggleBackground = () => {
     setBgIndex((prev) => (prev + 1) % BACKGROUNDS.length)
+  }
+
+  const toggleAudio = () => {
+    const newEnabled = !isAudioEnabled
+    setIsAudioEnabled(newEnabled)
+    if (newEnabled && audioRef.current) {
+      audioRef.current.play().catch(console.warn)
+    } else if (audioRef.current) {
+      audioRef.current.pause()
+    }
   }
 
 
@@ -140,6 +157,11 @@ function App() {
               <span className="bg-preview" style={{ background: currentBg.color }}></span>
             </span>
             <span className="bg-text">{currentBg.name}</span>
+          </button>
+
+          <button className={`audio-toggle ${isAudioEnabled ? 'active' : ''}`} onClick={toggleAudio} title="Toggle Anthem">
+            <span className="audio-icon">{isAudioEnabled ? '🔊' : '🔇'}</span>
+            <span className="audio-text">{isAudioEnabled ? 'Mute' : 'Play Anthem'}</span>
           </button>
         </div>
 

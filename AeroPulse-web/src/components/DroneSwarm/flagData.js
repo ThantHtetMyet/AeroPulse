@@ -48,12 +48,26 @@ export const FLAGS = {
   saudi: { name: 'Saudi Arabia', image: '/flags/saudi.png', anthem: '/anthems/saudi.mp3', capital: 'Riyadh', population: '35M', gdp: '$833B', timezone: 'Asia/Riyadh', dacUrl: 'https://visa.visitsaudi.com/' },
 }
 
+// Helper for GitHub Pages path resolution
+export const getAssetPath = (path) => {
+  if (!path) return path;
+  // If it's a relative-to-root path from flagData, map it to our BASE_URL
+  if (path.startsWith('/')) {
+    const base = import.meta.env.BASE_URL || '/';
+    // Ensure base ends with / and path doesn't start with / for join
+    const normalizedBase = base.endsWith('/') ? base : `${base}/`;
+    return `${normalizedBase}${path.slice(1)}`;
+  }
+  return path;
+};
+
 // Function to load image and return ImageData
 export function loadFlagImage(url) {
+  const resolvedUrl = getAssetPath(url);
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'Anonymous';
-    img.src = url;
+    img.src = resolvedUrl;
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
