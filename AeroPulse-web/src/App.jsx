@@ -214,38 +214,43 @@ function InfoPanel({ selectedCountry }) {
 
   return (
     <div className="info-content">
-      <h1 className="big-country-name">{data.name}</h1>
-      <div className="info-separator-large"></div>
+      <div className="info-header">
+        <div className="info-title">
+          <h1 className="big-country-name">{data.name}</h1>
+          <span className="info-subtitle">Country Overview</span>
+        </div>
+        <div className="info-divider"></div>
+      </div>
 
-      <div className="big-info-grid">
-        <div className="big-info-item">
-          <span className="big-info-label">Capital</span>
-          <span className="big-info-value">{data.capital || 'N/A'}</span>
+      <div className="info-stats">
+        <div className="info-stat">
+          <span className="info-stat-label">Capital</span>
+          <span className="info-stat-value">{data.capital || 'N/A'}</span>
         </div>
-        <div className="big-info-item">
-          <span className="big-info-label">Population</span>
-          <span className="big-info-value">{data.population || 'N/A'}</span>
+        <div className="info-stat">
+          <span className="info-stat-label">Population</span>
+          <span className="info-stat-value">{data.population || 'N/A'}</span>
         </div>
-        <div className="big-info-item">
-          <span className="big-info-label">GDP</span>
-          <span className="big-info-value">{data.gdp || 'N/A'}</span>
+        <div className="info-stat">
+          <span className="info-stat-label">GDP</span>
+          <span className="info-stat-value">{data.gdp || 'N/A'}</span>
         </div>
-        <div className="big-info-item">
-          <span className="big-info-label">Date & Time</span>
-          <span className="big-info-value" style={{ fontSize: '1rem', whiteSpace: 'pre-wrap' }}>{currentTime}</span>
-        </div>
-        <div className="big-info-item">
-          <span className="big-info-label">Arrival Card</span>
-          {data.dacUrl ? (
-            <a href={data.dacUrl} target="_blank" rel="noopener noreferrer" className="big-info-value" style={{ fontSize: '1rem', color: '#64c8ff', textDecoration: 'underline', cursor: 'pointer', display: 'inline-block' }}>
-              Official Site <span style={{ fontSize: '0.8em' }}>↗</span>
-            </a>
-          ) : (
-            <span className="big-info-value" style={{ fontSize: '1rem', opacity: 0.7 }}>Not Required</span>
-          )}
+        <div className="info-stat">
+          <span className="info-stat-label">Date & Time</span>
+          <span className="info-stat-value info-stat-value-time">{currentTime}</span>
         </div>
       </div>
 
+      <div className="info-footer">
+        <span className="info-footer-label">Arrival Card</span>
+        {data.dacUrl ? (
+          <a href={data.dacUrl} target="_blank" rel="noopener noreferrer" className="info-footer-link">
+            Official Site <span className="info-footer-arrow">↗</span>
+          </a>
+        ) : (
+          <span className="info-footer-muted">Not Required</span>
+        )}
+      </div>
     </div>
   )
 }

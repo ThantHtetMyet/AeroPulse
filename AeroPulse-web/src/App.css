@@ -392,18 +392,116 @@ canvas.main-canvas {
 .info-content {
   width: 100%;
   max-width: 400px;
-  /* Reduced width */
-  background: rgba(16, 18, 27, 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 24px;
-  /* Slightly reduced curve */
-  padding: 2.5rem;
-  /* Reduced padding */
+  background: rgba(10, 12, 20, 0.55);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border-radius: 22px;
+  padding: 2rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
   pointer-events: auto;
   animation: fadeIn 0.8s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.info-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.info-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.info-subtitle {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.info-divider {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.9), rgba(129, 140, 248, 0.1));
+  border-radius: 999px;
+}
+
+.info-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.info-stat {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.info-stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.info-stat-value {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.info-stat-value-time {
+  font-size: 0.95rem;
+  line-height: 1.3;
+  white-space: pre-wrap;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.info-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.info-footer-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.info-footer-link {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #7aa6ff;
+  text-decoration: none;
+}
+
+.info-footer-link:hover {
+  color: #a5b4fc;
+}
+
+.info-footer-arrow {
+  font-size: 0.8em;
+}
+
+.info-footer-muted {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 @keyframes fadeIn {
@@ -555,11 +653,10 @@ canvas.main-canvas {
     width: 92%;
     max-width: 100%;
     margin-bottom: 0;
-    /* Reduced margin as footer is now fixed */
-    background: rgba(16, 18, 27, 0.4);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    padding: 1rem;
+    background: rgba(10, 12, 20, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 1.2rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border-radius: 20px;
@@ -567,6 +664,7 @@ canvas.main-canvas {
     pointer-events: auto;
     max-height: 42vh;
     overflow-y: auto;
+    gap: 1rem;
   }
 
   .big-country-name {
@@ -574,23 +672,35 @@ canvas.main-canvas {
     text-align: center;
   }
 
-  .info-separator-large {
-    margin: 0.8rem auto;
-    height: 2px;
-  }
-
-  .big-info-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.6rem;
+  .info-header {
+    align-items: center;
     text-align: center;
   }
 
-  .big-info-item {
-    align-items: center;
+  .info-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
   }
 
-  .big-info-value {
+  .info-stat {
+    padding: 0.75rem 0.8rem;
+    border-radius: 14px;
+    text-align: center;
+  }
+
+  .info-stat-value {
     font-size: 1rem;
+  }
+
+  .info-stat-value-time {
+    font-size: 0.85rem;
+  }
+
+  .info-footer {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    text-align: center;
   }
 
   /* Absolute Footer for Mobile to better integrate with 3D scene */
