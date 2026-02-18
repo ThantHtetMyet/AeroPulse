@@ -95,8 +95,37 @@
   box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.3);
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  z-index: 3000;
-  animation: slideUp 0.2s ease-out;
+  z-index: 9999;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 768px) {
+  .dropdown-menu {
+    position: fixed;
+    bottom: 0 !important;
+    left: 0 !important;
+    top: auto !important;
+    width: 100vw !important;
+    max-height: 60vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    background: rgba(10, 15, 25, 0.95) !important;
+    backdrop-filter: blur(25px) !important;
+    -webkit-backdrop-filter: blur(25px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    margin: 0 !important;
+    padding: 1.5rem 1rem 2rem 1rem !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .dropdown-menu::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    margin: -0.5rem auto 1rem auto;
+  }
 }
 
 @keyframes slideUp {
@@ -513,8 +542,8 @@ canvas.main-canvas {
     width: 100%;
     height: auto;
     min-height: auto;
-    padding: 1rem 1rem 7rem 1rem;
-    /* Reduced space for fixed footer to push panel down */
+    padding: 1rem 1rem 10rem 1rem;
+    /* Increased bottom padding to push panel higher */
     display: flex !important;
     flex-direction: column;
     justify-content: flex-end;
@@ -538,10 +567,9 @@ canvas.main-canvas {
     border-radius: 20px;
     animation: none;
     pointer-events: auto;
-    max-height: 45vh;
-    /* Limit height to 45% of viewport */
+    max-height: 60vh;
+    /* Increased from 45vh */
     overflow-y: auto;
-    /* Allow scroll if content is too long */
   }
 
   .big-country-name {
@@ -568,26 +596,27 @@ canvas.main-canvas {
     font-size: 1rem;
   }
 
-  /* Fixed Footer for Mobile */
+  /* Absolute Footer for Mobile to better integrate with 3D scene */
   .footer-controls {
-    position: fixed;
+    position: absolute;
+    /* Changed from fixed to absolute */
     bottom: 0;
     left: 0;
     width: 100%;
     height: auto;
-    padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+    padding: 0.8rem 1rem calc(0.8rem + env(safe-area-inset-bottom));
     flex-wrap: nowrap;
-    /* Keep buttons on one line for better layout */
-    overflow-x: auto;
-    /* Horizontal scroll for buttons if needed */
     gap: 0.8rem;
-    background: rgba(0, 5, 10, 0.6);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(0, 5, 10, 0.4);
+    /* More transparent */
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     border-top: 1px solid rgba(255, 255, 255, 0.05);
-    z-index: 1000;
+    z-index: 5000;
+    /* Very high */
     justify-content: center;
     box-sizing: border-box;
+    pointer-events: auto;
   }
 
   .footer-left {
