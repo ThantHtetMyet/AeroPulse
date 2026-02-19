@@ -1,12 +1,15 @@
 import { useState, Suspense, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stars } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
+import { QRCodeSVG } from 'qrcode.react'
 import { DroneSwarm, Ground, AmbientParticles } from './components/DroneSwarm/DroneSwarm'
 import { FLAGS, getAssetPath } from './components/DroneSwarm/flagData'
 import './App.css'
 
 const BACKGROUNDS = [
+  { name: 'Slate', color: '#2d3a4d', showStars: true, isLight: false },
   { name: 'Night Sky', color: '#000510', showStars: true, isLight: false },
   { name: 'Dark Blue', color: '#0a1628', showStars: true, isLight: false },
   { name: 'Deep Purple', color: '#150520', showStars: true, isLight: false },
@@ -17,7 +20,7 @@ const BACKGROUNDS = [
 ]
 
 function App() {
-  const [selectedCountry, setSelectedCountry] = useState('usa')
+  const [selectedCountry, setSelectedCountry] = useState('argentina')
   const [bgIndex, setBgIndex] = useState(0)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [isAudioEnabled, setIsAudioEnabled] = useState(false)
@@ -183,6 +186,7 @@ function App() {
 
 function InfoPanel({ selectedCountry }) {
   const data = FLAGS[selectedCountry]
+  const [showQRModal, setShowQRModal] = useState(false)
 
   const getCountryTime = (timezone) => {
     if (!timezone) return 'N/A'
@@ -217,7 +221,6 @@ function InfoPanel({ selectedCountry }) {
       <div className="info-header">
         <div className="info-title">
           <h1 className="big-country-name">{data.name}</h1>
-          <span className="info-subtitle">Country Overview</span>
         </div>
         <div className="info-divider"></div>
       </div>
@@ -242,15 +245,56 @@ function InfoPanel({ selectedCountry }) {
       </div>
 
       <div className="info-footer">
-        <span className="info-footer-label">Arrival Card</span>
-        {data.dacUrl ? (
-          <a href={data.dacUrl} target="_blank" rel="noopener noreferrer" className="info-footer-link">
-            Official Site <span className="info-footer-arrow">↗</span>
-          </a>
-        ) : (
-          <span className="info-footer-muted">Not Required</span>
+        <div className="info-footer-left">
+          <span className="info-footer-label">Arrival Card</span>
+          {data.dacUrl ? (
+            <a href={data.dacUrl} target="_blank" rel="noopener noreferrer" className="info-footer-link">
+              {data.dacLabel || 'Official Site'} <span className="info-footer-arrow">↗</span>
+            </a>
+          ) : (
+            <span className="info-footer-muted">Not Required</span>
+          )}
+        </div>
+        {data.dacUrl && (
+          <button
+            className="qr-icon-btn"
+            onClick={() => setShowQRModal(true)}
+            title="Show QR Code"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="3" height="3" />
+              <rect x="18" y="14" width="3" height="3" />
+              <rect x="14" y="18" width="3" height="3" />
+              <rect x="18" y="18" width="3" height="3" />
+            </svg>
+          </button>
         )}
       </div>
+
+      {showQRModal && data.dacUrl && createPortal(
+        <div className="qr-modal-overlay" onClick={() => setShowQRModal(false)}>
+          <button className="qr-modal-close" onClick={() => setShowQRModal(false)}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+          <div className="qr-modal-qr" onClick={(e) => e.stopPropagation()}>
+            <QRCodeSVG
+              value={data.dacUrl}
+              size={1024}
+              bgColor="#ffffff"
+              fgColor="#000000"
+              level="H"
+              marginSize={2}
+            />
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }

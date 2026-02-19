@@ -4,7 +4,10 @@
       "Bash(npm run dev:*)",
       "Bash(curl:*)",
       "Bash(curl -L -o japan.png \"https://flagcdn.com/w320/jp.png\")",
-      "Bash(curl -L -o china.png \"https://flagcdn.com/w320/cn.png\")"
+      "Bash(curl -L -o china.png \"https://flagcdn.com/w320/cn.png\")",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }
