@@ -184,9 +184,40 @@ function App() {
   )
 }
 
+const WMO_CODES = {
+  0: { label: 'Clear Sky', icon: '☀️' },
+  1: { label: 'Mainly Clear', icon: '🌤️' },
+  2: { label: 'Partly Cloudy', icon: '⛅' },
+  3: { label: 'Overcast', icon: '☁️' },
+  45: { label: 'Foggy', icon: '🌫️' },
+  48: { label: 'Icy Fog', icon: '🌫️' },
+  51: { label: 'Light Drizzle', icon: '🌦️' },
+  53: { label: 'Drizzle', icon: '🌦️' },
+  55: { label: 'Heavy Drizzle', icon: '🌧️' },
+  61: { label: 'Light Rain', icon: '🌧️' },
+  63: { label: 'Rain', icon: '🌧️' },
+  65: { label: 'Heavy Rain', icon: '🌧️' },
+  71: { label: 'Light Snow', icon: '🌨️' },
+  73: { label: 'Snow', icon: '❄️' },
+  75: { label: 'Heavy Snow', icon: '❄️' },
+  77: { label: 'Snow Grains', icon: '🌨️' },
+  80: { label: 'Light Showers', icon: '🌦️' },
+  81: { label: 'Showers', icon: '🌧️' },
+  82: { label: 'Heavy Showers', icon: '⛈️' },
+  85: { label: 'Snow Showers', icon: '🌨️' },
+  86: { label: 'Heavy Snow Showers', icon: '❄️' },
+  95: { label: 'Thunderstorm', icon: '⛈️' },
+  96: { label: 'Thunderstorm w/ Hail', icon: '⛈️' },
+  99: { label: 'Thunderstorm w/ Hail', icon: '⛈️' },
+}
+
 function InfoPanel({ selectedCountry }) {
   const data = FLAGS[selectedCountry]
   const [showQRModal, setShowQRModal] = useState(false)
+  const [isFlipped, setIsFlipped] = useState(false)
+  const [weather, setWeather] = useState(null)
+  const [weatherLoading, setWeatherLoading] = useState(false)
+  const [weatherError, setWeatherError] = useState(false)
 
   const getCountryTime = (timezone) => {
     if (!timezone) return 'N/A'
@@ -207,90 +238,192 @@ function InfoPanel({ selectedCountry }) {
 
   useEffect(() => {
     if (!data?.timezone) return
-
     const timer = setInterval(() => {
       setCurrentTime(getCountryTime(data.timezone))
     }, 1000)
     return () => clearInterval(timer)
   }, [data?.timezone])
 
+  // Reset flip when country changes
+  useEffect(() => {
+    setIsFlipped(false)
+    setWeather(null)
+    setWeatherError(false)
+  }, [selectedCountry])
+
+  // Fetch weather when flipped
+  useEffect(() => {
+    if (!isFlipped || weather || !data?.capital) return
+    setWeatherLoading(true)
+    setWeatherError(false)
+
+    const fetchWeather = async () => {
+      try {
+        const geoRes = await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(data.capital)}&count=1&language=en&format=json`
+        )
+        const geoData = await geoRes.json()
+        if (!geoData.results?.length) throw new Error('City not found')
+        const { latitude, longitude } = geoData.results[0]
+
+        const wxRes = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,precipitation&wind_speed_unit=kmh&timezone=auto`
+        )
+        const wxData = await wxRes.json()
+        setWeather(wxData.current)
+      } catch {
+        setWeatherError(true)
+      } finally {
+        setWeatherLoading(false)
+      }
+    }
+    fetchWeather()
+  }, [isFlipped, selectedCountry, data?.capital, weather])
+
   if (!data) return null
 
+  const wmo = weather ? (WMO_CODES[weather.weather_code] ?? { label: 'Unknown', icon: '🌡️' }) : null
+
   return (
-    <div className="info-content">
-      <div className="info-header">
-        <div className="info-title">
-          <h1 className="big-country-name">{data.name}</h1>
-        </div>
-        <div className="info-divider"></div>
-      </div>
+    <div className="info-card-wrapper">
+      <div className={`info-card ${isFlipped ? 'is-flipped' : ''}`}>
 
-      <div className="info-stats">
-        <div className="info-stat">
-          <span className="info-stat-label">Capital</span>
-          <span className="info-stat-value">{data.capital || 'N/A'}</span>
-        </div>
-        <div className="info-stat">
-          <span className="info-stat-label">Population</span>
-          <span className="info-stat-value">{data.population || 'N/A'}</span>
-        </div>
-        <div className="info-stat">
-          <span className="info-stat-label">GDP</span>
-          <span className="info-stat-value">{data.gdp || 'N/A'}</span>
-        </div>
-        <div className="info-stat">
-          <span className="info-stat-label">Date & Time</span>
-          <span className="info-stat-value info-stat-value-time">{currentTime}</span>
-        </div>
-      </div>
-
-      <div className="info-footer">
-        <div className="info-footer-left">
-          <span className="info-footer-label">Arrival Card</span>
-          {data.dacUrl ? (
-            <a href={data.dacUrl} target="_blank" rel="noopener noreferrer" className="info-footer-link">
-              {data.dacLabel || 'Official Site'} <span className="info-footer-arrow">↗</span>
-            </a>
-          ) : (
-            <span className="info-footer-muted">Not Required</span>
-          )}
-        </div>
-        {data.dacUrl && (
-          <button
-            className="qr-icon-btn"
-            onClick={() => setShowQRModal(true)}
-            title="Show QR Code"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="3" height="3" />
-              <rect x="18" y="14" width="3" height="3" />
-              <rect x="14" y="18" width="3" height="3" />
-              <rect x="18" y="18" width="3" height="3" />
+        {/* ── FRONT ── */}
+        <div className="info-card-front">
+          <button className="flip-btn" onClick={() => setIsFlipped(true)} title="Show Weather">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2a10 10 0 1 0 10 10"/>
+              <path d="M12 6v6l4 2"/>
+              <path d="M22 2l-3 3m0 0l-3-3m3 3V2"/>
             </svg>
           </button>
-        )}
+
+          <div className="info-header">
+            <div className="info-title">
+              <h1 className="big-country-name">{data.name}</h1>
+            </div>
+            <div className="info-divider"></div>
+          </div>
+
+          <div className="info-stats">
+            <div className="info-stat">
+              <span className="info-stat-label">Capital</span>
+              <span className="info-stat-value">{data.capital || 'N/A'}</span>
+            </div>
+            <div className="info-stat">
+              <span className="info-stat-label">Population</span>
+              <span className="info-stat-value">{data.population || 'N/A'}</span>
+            </div>
+            <div className="info-stat">
+              <span className="info-stat-label">GDP</span>
+              <span className="info-stat-value">{data.gdp || 'N/A'}</span>
+            </div>
+            <div className="info-stat">
+              <span className="info-stat-label">Date & Time</span>
+              <span className="info-stat-value info-stat-value-time">{currentTime}</span>
+            </div>
+          </div>
+
+          <div className="info-footer">
+            <div className="info-footer-left">
+              <span className="info-footer-label">Arrival Card</span>
+              {data.dacUrl ? (
+                <a href={data.dacUrl} target="_blank" rel="noopener noreferrer" className="info-footer-link">
+                  {data.dacLabel || 'Official Site'} <span className="info-footer-arrow">↗</span>
+                </a>
+              ) : (
+                <span className="info-footer-muted">Not Required</span>
+              )}
+            </div>
+            {data.dacUrl && (
+              <button className="qr-icon-btn" onClick={() => setShowQRModal(true)} title="Show QR Code">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="7" height="7" rx="1"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1"/>
+                  <rect x="14" y="14" width="3" height="3"/>
+                  <rect x="18" y="14" width="3" height="3"/>
+                  <rect x="14" y="18" width="3" height="3"/>
+                  <rect x="18" y="18" width="3" height="3"/>
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ── BACK (Weather) ── */}
+        <div className="info-card-back">
+          <button className="flip-btn" onClick={() => setIsFlipped(false)} title="Back to Info">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+
+          <div className="weather-back-header">
+            <span className="weather-back-title">Live Weather</span>
+            <h1 className="weather-back-country">{data.name}</h1>
+            <span className="weather-back-title">{data.capital}</span>
+          </div>
+
+          {weatherLoading && (
+            <div className="weather-loading">
+              <span>⏳</span> Fetching weather…
+            </div>
+          )}
+
+          {weatherError && !weatherLoading && (
+            <div className="weather-error">
+              <span>⚠️</span> Unable to load weather data
+            </div>
+          )}
+
+          {weather && !weatherLoading && (
+            <>
+              <div className="weather-main">
+                <span className="weather-icon">{wmo.icon}</span>
+                <div className="weather-temp-block">
+                  <span className="weather-temp">{Math.round(weather.temperature_2m)}°C</span>
+                  <span className="weather-condition">{wmo.label}</span>
+                  <span className="weather-feels">Feels like {Math.round(weather.apparent_temperature)}°C</span>
+                </div>
+              </div>
+
+              <div className="weather-grid">
+                <div className="weather-item">
+                  <span className="weather-item-label">Humidity</span>
+                  <span className="weather-item-value">{weather.relative_humidity_2m}%</span>
+                </div>
+                <div className="weather-item">
+                  <span className="weather-item-label">Wind Speed</span>
+                  <span className="weather-item-value">{Math.round(weather.wind_speed_10m)} km/h</span>
+                </div>
+                <div className="weather-item">
+                  <span className="weather-item-label">Precipitation</span>
+                  <span className="weather-item-value">{weather.precipitation} mm</span>
+                </div>
+                <div className="weather-item">
+                  <span className="weather-item-label">Weather Code</span>
+                  <span className="weather-item-value">WMO {weather.weather_code}</span>
+                </div>
+              </div>
+
+              <p className="weather-updated">Updated just now · Open-Meteo</p>
+            </>
+          )}
+        </div>
+
       </div>
 
       {showQRModal && data.dacUrl && createPortal(
         <div className="qr-modal-overlay" onClick={() => setShowQRModal(false)}>
           <button className="qr-modal-close" onClick={() => setShowQRModal(false)}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
           <div className="qr-modal-qr" onClick={(e) => e.stopPropagation()}>
-            <QRCodeSVG
-              value={data.dacUrl}
-              size={1024}
-              bgColor="#ffffff"
-              fgColor="#000000"
-              level="H"
-              marginSize={2}
-            />
+            <QRCodeSVG value={data.dacUrl} size={1024} bgColor="#ffffff" fgColor="#000000" level="H" marginSize={2} />
           </div>
         </div>,
         document.body
