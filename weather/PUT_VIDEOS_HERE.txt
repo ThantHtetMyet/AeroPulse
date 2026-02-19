@@ -1,1 +1,0 @@
-Please place rain.mp4, snow.mp4, and storm.mp4 in this folder.
