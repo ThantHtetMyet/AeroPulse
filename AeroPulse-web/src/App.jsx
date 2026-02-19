@@ -6,6 +6,7 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import { QRCodeSVG } from 'qrcode.react'
 import { DroneSwarm, Ground, AmbientParticles } from './components/DroneSwarm/DroneSwarm'
 import { FLAGS, getAssetPath } from './components/DroneSwarm/flagData'
+import DynamicBackground from './components/DynamicBackground/DynamicBackground'
 import './App.css'
 
 const BACKGROUNDS = [
@@ -26,14 +27,43 @@ function App() {
   const [isAudioEnabled, setIsAudioEnabled] = useState(false)
   const audioRef = useRef(null)
 
+  // Weather & Time Interactions
+  // Weather & Time Interactions
+  const [weatherData, setWeatherData] = useState(null)
+  const [timeOfDay, setTimeOfDay] = useState('morning') // Default
+  const [isWeatherView, setIsWeatherView] = useState(false)
+
   const currentBg = BACKGROUNDS[bgIndex]
+
+  const getTimePhase = (hour) => {
+    if (hour >= 5 && hour < 7) return 'dawn'
+    if (hour >= 7 && hour < 11) return 'morning'
+    if (hour >= 11 && hour < 13) return 'noon'
+    if (hour >= 13 && hour < 17) return 'afternoon'
+    if (hour >= 17 && hour < 20) return 'evening'
+    if (hour >= 20) return 'night'
+    return 'midnight'
+  }
+
+  // Handle country change and immediate time update
+  const handleCountryChange = (countryCode) => {
+    setSelectedCountry(countryCode)
+    const data = FLAGS[countryCode]
+    if (data?.timezone) {
+      try {
+        const hour = parseInt(new Date().toLocaleString('en-US', { timeZone: data.timezone, hour: 'numeric', hour12: false }))
+        setTimeOfDay(getTimePhase(hour))
+      } catch {
+        setTimeOfDay('morning')
+      }
+    }
+  }
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-
 
   const countryOptions = Object.entries(FLAGS).map(([code, data]) => ({
     code,
@@ -87,7 +117,12 @@ function App() {
   }, [selectedCountry, isMobile])
 
   return (
-    <div className={`app ${currentBg.isLight ? 'light-mode' : ''}`} style={{ background: currentBg.color, minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' }}>
+    <div className={`app ${currentBg.isLight ? 'light-mode' : ''}`} style={{ background: 'transparent', minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' }}>
+
+      {/* Dynamic Background Layer */}
+      {/* Dynamic Background Layer */}
+      <DynamicBackground weather={weatherData} timeOfDay={timeOfDay} isActive={isWeatherView} />
+
       <Canvas
         className="main-canvas"
         camera={{
@@ -98,10 +133,11 @@ function App() {
         }}
         gl={{
           antialias: true,
-          powerPreference: 'high-performance'
+          powerPreference: 'high-performance',
+          alpha: true
         }}
       >
-        <color attach="background" args={[currentBg.color]} />
+        {/* <color attach="background" args={[currentBg.color]} /> Remove static background Color */}
 
         {currentBg.showStars && (
           <Stars radius={100} depth={50} count={2000} factor={4} saturation={0} fade speed={0.3} />
@@ -120,10 +156,10 @@ function App() {
 
             <EffectComposer>
               <Bloom
-                luminanceThreshold={0.4}
+                luminanceThreshold={0.9}
                 mipmapBlur
-                intensity={0.8}
-                radius={0.3}
+                intensity={0.5}
+                radius={0.2}
               />
             </EffectComposer>
           </Suspense>
@@ -150,25 +186,22 @@ function App() {
         </div>
 
         <div className="right-panel">
-          <InfoPanel selectedCountry={selectedCountry} />
+          <InfoPanel
+            selectedCountry={selectedCountry}
+            setGlobalWeather={setWeatherData}
+            setGlobalIsWeatherView={setIsWeatherView}
+          />
         </div>
       </div>
 
       <div className="footer-controls">
-        <div className="footer-left">
-          <button className="bg-toggle" onClick={toggleBackground}>
-            <span className="bg-icon">
-              <span className="bg-preview" style={{ background: currentBg.color }}></span>
-            </span>
-            <span className="bg-text">{currentBg.name}</span>
-          </button>
-        </div>
+
 
         <div className="footer-center">
           <CustomDropdown
             selected={selectedCountry}
             options={countryOptions}
-            onChange={setSelectedCountry}
+            onChange={handleCountryChange}
           />
         </div>
 
@@ -211,7 +244,22 @@ const WMO_CODES = {
   99: { label: 'Thunderstorm w/ Hail', icon: '⛈️' },
 }
 
-function InfoPanel({ selectedCountry }) {
+const getCountryTime = (timezone) => {
+  if (!timezone) return 'N/A'
+  return new Date().toLocaleString('en-US', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+function InfoPanel({ selectedCountry, setGlobalWeather, setGlobalIsWeatherView }) {
   const data = FLAGS[selectedCountry]
   const [showQRModal, setShowQRModal] = useState(false)
   const [isFlipped, setIsFlipped] = useState(false)
@@ -219,20 +267,7 @@ function InfoPanel({ selectedCountry }) {
   const [weatherLoading, setWeatherLoading] = useState(false)
   const [weatherError, setWeatherError] = useState(false)
 
-  const getCountryTime = (timezone) => {
-    if (!timezone) return 'N/A'
-    return new Date().toLocaleString('en-US', {
-      timeZone: timezone,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
+
 
   const [currentTime, setCurrentTime] = useState(() => getCountryTime(data?.timezone))
 
@@ -245,11 +280,22 @@ function InfoPanel({ selectedCountry }) {
   }, [data?.timezone])
 
   // Reset flip when country changes
+  // Reset flip when country changes
+
+
+  // Reset flip when country changes
   useEffect(() => {
     setIsFlipped(false)
+    setGlobalIsWeatherView(false)
     setWeather(null)
+    setGlobalWeather(null)
     setWeatherError(false)
-  }, [selectedCountry])
+  }, [selectedCountry, setGlobalIsWeatherView, setGlobalWeather])
+
+  const handleFlip = (flipped) => {
+    setIsFlipped(flipped)
+    setGlobalIsWeatherView(flipped)
+  }
 
   // Fetch weather when flipped
   useEffect(() => {
@@ -267,10 +313,16 @@ function InfoPanel({ selectedCountry }) {
         const { latitude, longitude } = geoData.results[0]
 
         const wxRes = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,precipitation&wind_speed_unit=kmh&timezone=auto`
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,precipitation,is_day&wind_speed_unit=kmh&timezone=auto`
         )
         const wxData = await wxRes.json()
         setWeather(wxData.current)
+        setGlobalWeather(wxData.current)
+        if (wxData.current.is_day !== undefined) {
+          // We rely on calculated timezone phase for background, 
+          // but could use this for icon logic if needed.
+          // setGlobalIsDay(wxData.current.is_day === 1)
+        }
       } catch {
         setWeatherError(true)
       } finally {
@@ -278,7 +330,7 @@ function InfoPanel({ selectedCountry }) {
       }
     }
     fetchWeather()
-  }, [isFlipped, selectedCountry, data?.capital, weather])
+  }, [isFlipped, selectedCountry, data?.capital, weather, setGlobalWeather])
 
   if (!data) return null
 
@@ -289,12 +341,13 @@ function InfoPanel({ selectedCountry }) {
       <div className={`info-card ${isFlipped ? 'is-flipped' : ''}`}>
 
         {/* ── FRONT ── */}
+        {/* ── FRONT ── */}
         <div className="info-card-front">
-          <button className="flip-btn" onClick={() => setIsFlipped(true)} title="Show Weather">
+          <button className="flip-btn" onClick={() => handleFlip(true)} title="Show Weather">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2a10 10 0 1 0 10 10"/>
-              <path d="M12 6v6l4 2"/>
-              <path d="M22 2l-3 3m0 0l-3-3m3 3V2"/>
+              <path d="M12 2a10 10 0 1 0 10 10" />
+              <path d="M12 6v6l4 2" />
+              <path d="M22 2l-3 3m0 0l-3-3m3 3V2" />
             </svg>
           </button>
 
@@ -338,13 +391,13 @@ function InfoPanel({ selectedCountry }) {
             {data.dacUrl && (
               <button className="qr-icon-btn" onClick={() => setShowQRModal(true)} title="Show QR Code">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="7" height="7" rx="1"/>
-                  <rect x="14" y="3" width="7" height="7" rx="1"/>
-                  <rect x="3" y="14" width="7" height="7" rx="1"/>
-                  <rect x="14" y="14" width="3" height="3"/>
-                  <rect x="18" y="14" width="3" height="3"/>
-                  <rect x="14" y="18" width="3" height="3"/>
-                  <rect x="18" y="18" width="3" height="3"/>
+                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                  <rect x="14" y="14" width="3" height="3" />
+                  <rect x="18" y="14" width="3" height="3" />
+                  <rect x="14" y="18" width="3" height="3" />
+                  <rect x="18" y="18" width="3" height="3" />
                 </svg>
               </button>
             )}
@@ -352,10 +405,11 @@ function InfoPanel({ selectedCountry }) {
         </div>
 
         {/* ── BACK (Weather) ── */}
+        {/* ── BACK (Weather) ── */}
         <div className="info-card-back">
-          <button className="flip-btn" onClick={() => setIsFlipped(false)} title="Back to Info">
+          <button className="flip-btn" onClick={() => handleFlip(false)} title="Back to Info">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="15 18 9 12 15 6"/>
+              <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
 
@@ -418,8 +472,8 @@ function InfoPanel({ selectedCountry }) {
         <div className="qr-modal-overlay" onClick={() => setShowQRModal(false)}>
           <button className="qr-modal-close" onClick={() => setShowQRModal(false)}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
           <div className="qr-modal-qr" onClick={(e) => e.stopPropagation()}>

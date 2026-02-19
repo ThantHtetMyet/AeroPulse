@@ -47,8 +47,9 @@ export function DroneSwarm({ country = 'usa' }) {
 
       dummy.position.set(pos.x + noiseX, pos.y + noiseY, pos.z + noiseZ)
 
-      const twinkle = 0.92 + Math.sin(time * 4 + i * 0.06) * 0.08
-      dummy.scale.setScalar(twinkle)
+
+
+      dummy.scale.setScalar(1)
       dummy.updateMatrix()
       meshRef.current.setMatrixAt(i, dummy.matrix)
 
@@ -62,18 +63,25 @@ export function DroneSwarm({ country = 'usa' }) {
         // Default blue/cyan for station or loading
         r = 0; g = 0.9; b = 1
       } else {
-        // Sample from image
+        // Sample from image - use original colors
         const [imgR, imgG, imgB] = getFlagColorFromImage(imageData, u, v)
-        r = imgR; g = imgG; b = imgB
+        r = imgR
+        g = imgG
+        b = imgB
+
+        // Only boost yellow/gold colors (like Argentina sun) for better visibility
+        // Yellow: high R (>0.8), high G (>0.6), low B (<0.4)
+        if (r > 0.8 && g > 0.6 && b < 0.4) {
+          // Make yellow more vibrant/golden
+          r = Math.min(1, r * 1.1)
+          g = Math.min(1, g * 0.95)
+          b = Math.max(0, b * 0.5)
+        }
       }
 
-      // Intensity and sparkle
-      const intensity = 1.8
-      const sparkle = 0.9 + Math.random() * 0.2
-
-      colorArray[i * 3] = r * intensity * sparkle
-      colorArray[i * 3 + 1] = g * intensity * sparkle
-      colorArray[i * 3 + 2] = b * intensity * sparkle
+      colorArray[i * 3] = r
+      colorArray[i * 3 + 1] = g
+      colorArray[i * 3 + 2] = b
     }
 
     meshRef.current.instanceMatrix.needsUpdate = true
@@ -82,10 +90,10 @@ export function DroneSwarm({ country = 'usa' }) {
 
   return (
     <instancedMesh ref={meshRef} args={[null, null, DRONE_COUNT]} frustumCulled={false}>
-      <sphereGeometry args={[0.045, 8, 8]}>
+      <sphereGeometry args={[0.08, 12, 12]}>
         <instancedBufferAttribute attach="attributes-color" args={[new Float32Array(DRONE_COUNT * 3), 3]} />
       </sphereGeometry>
-      <meshBasicMaterial vertexColors toneMapped={false} />
+      <meshBasicMaterial vertexColors toneMapped={true} />
     </instancedMesh>
   )
 }
