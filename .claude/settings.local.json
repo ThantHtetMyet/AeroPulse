@@ -7,7 +7,9 @@
       "Bash(curl -L -o china.png \"https://flagcdn.com/w320/cn.png\")",
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri ''https://assets.mixkit.co/videos/preview/mixkit-rain-falling-on-the-puddles-of-the-street-on-a-rainy-2510-large.mp4'' -OutFile ''c:\\\\Users\\\\thanthtet.myet\\\\Documents\\\\01_Willowglen\\\\B_001_Workplace\\\\AeroPulse\\\\AeroPulse-web\\\\public\\\\weather\\\\rain.mp4'' -UseBasicParsing\")",
+      "Bash(powershell -Command \"$ProgressPreference = ''SilentlyContinue''; Invoke-WebRequest -Uri ''https://static.videezy.com/system/resources/previews/000/038/649/original/Rain02.mp4'' -OutFile ''c:\\\\Users\\\\thanthtet.myet\\\\Documents\\\\01_Willowglen\\\\B_001_Workplace\\\\AeroPulse\\\\AeroPulse-web\\\\public\\\\weather\\\\rain.mp4'' -UseBasicParsing\")"
     ]
   }
 }
